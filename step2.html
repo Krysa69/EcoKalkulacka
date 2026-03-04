@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Krok 2 – Fakturace</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar__inner">
+      <div class="brand">
+        <div class="brand__logo" aria-hidden="true"></div>
+        <div>
+          <div class="brand__name">Energetická kalkulačka (orientační)</div>
+          <div class="brand__tag">Fotovoltaika • Tepelná čerpadla • Ohřev vody a vytápění</div>
+        </div>
+      </div>
+      <div class="navlinks">
+        <a href="./index.html">Úvod</a>
+        <a href="./step1.html">Kalkulačka</a>
+        <button class="btn" id="resetBtn" type="button">Vymazat údaje</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main wrap section">
+    
+        <div class="wizardTop">
+          <div class="progress"><div class="progress__bar" data-progress style="width:0%"></div></div>
+          <div class="meta">
+            <span class="pulse" aria-hidden="true"></span>
+            <span data-stepLabel class="mono">Krok 2 z 8</span>
+            <span class="phase" data-phase>Fáze: Výpočet (1–4)</span>
+            <span class="timer"><span data-timer>10:00</span></span>
+          </div>
+        </div>
+    <div class="card">
+      
+<h2>Krok 2: Roční náklady dle fakturace od stávajícího dodavatele</h2>
+<p>
+  Zde prosím vyplňte roční náklady z posledního vyúčtování. <b>Nepovinné</b>, ale doporučené.
+  Pokud vyplníte všechny 3, <b>Krok 3 se přeskočí</b>.
+</p>
+<div class="form">
+  <div class="field">
+    <label for="costTuv">TUV (Kč/rok) <span class="badge">volitelné</span></label>
+    <input id="costTuv" inputmode="decimal" placeholder="Kč / rok" />
+  </div>
+  <div class="field">
+    <label for="costHeat">Teplo (Kč/rok) <span class="badge">volitelné</span></label>
+    <input id="costHeat" inputmode="decimal" placeholder="Kč / rok" />
+  </div>
+  <div class="field">
+    <label for="costElec">Elektřina (Kč/rok) <span class="badge">volitelné</span></label>
+    <input id="costElec" inputmode="decimal" placeholder="Kč / rok" />
+  </div>
+</div>
+
+
+<div class="err" id="err" hidden></div>
+<div class="nav"><a class="btn" href="./step1.html">Zpět</a><button class="btn btn--primary" id="next" type="button">Pokračovat</button></div>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer__inner">
+      © 2026 • Energetická kalkulačka (orientační)
+    </div>
+  </footer>
+
+  <script src="./app.js"></script>
+  <script>
+    // global init
+    const rb = document.getElementById('resetBtn');
+    if (rb) rb.addEventListener('click', () => { ECO.resetAll(); window.location.href='./index.html'; });
+    ECO.renderTimer();
+    ECO.setWizardTop(2,8);
+  </script>
+  <script>
+  
+(() => {
+  const s = ECO.loadState();
+  const costTuv = document.getElementById('costTuv');
+  const costHeat = document.getElementById('costHeat');
+  const costElec = document.getElementById('costElec');
+  const err = document.getElementById('err');
+
+  costTuv.value = s.costTuv ?? "";
+  costHeat.value = s.costHeat ?? "";
+  costElec.value = s.costElec ?? "";
+
+  // Krok 2 je čistě pro doplnění nákladů z fakturace (bez mezisouhrnů).
+
+  document.getElementById('next').addEventListener('click', () => {
+    s.costTuv = ECO.parseNumber(costTuv.value);
+    s.costHeat = ECO.parseNumber(costHeat.value);
+    s.costElec = ECO.parseNumber(costElec.value);
+
+    const errs = [];
+    if (s.costTuv !== null && (!Number.isFinite(s.costTuv) || s.costTuv < 0)) errs.push("Náklady TUV musí být nezáporné číslo (nebo nech prázdné).");
+    if (s.costHeat !== null && (!Number.isFinite(s.costHeat) || s.costHeat < 0)) errs.push("Náklady tepla musí být nezáporné číslo (nebo nech prázdné).");
+    if (s.costElec !== null && (!Number.isFinite(s.costElec) || s.costElec < 0)) errs.push("Náklady elektřiny musí být nezáporné číslo (nebo nech prázdné).");
+
+    // sanity warnings (neblokující)
+    const warns = [];
+    if (Number.isFinite(s.costTuv) && s.costTuv > 50000000) warns.push("TUV: částka vypadá mimo realitu — zkontroluj nuly a formát.");
+    if (Number.isFinite(s.costHeat) && s.costHeat > 100000000) warns.push("Teplo: částka vypadá mimo realitu — zkontroluj nuly a formát.");
+    if (Number.isFinite(s.costElec) && s.costElec > 30000000) warns.push("Elektřina: částka vypadá mimo realitu — zkontroluj nuly a formát.");
+
+    if (errs.length) { ECO.showError(err, errs); return; }
+    if (warns.length) ECO.showError(err, warns); else ECO.showError(err, []);
+
+    const filled = [s.costTuv, s.costHeat, s.costElec].filter(Number.isFinite).length;
+    if (filled === 0) s.inputMode = 'consumption';
+    else if (filled === 3) s.inputMode = 'costs';
+    else s.inputMode = 'mixed';
+
+    ECO.saveState(s);
+
+    const hasAll = Number.isFinite(s.costTuv) && Number.isFinite(s.costHeat) && Number.isFinite(s.costElec);
+    const target = hasAll ? "./step4.html" : "./step3.html";
+    ECO.navigate(target);
+  });
+})();</script>
+</body>
+</html>

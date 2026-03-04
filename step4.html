@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Krok 4 – Objekt</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar__inner">
+      <div class="brand">
+        <div class="brand__logo" aria-hidden="true"></div>
+        <div>
+          <div class="brand__name">Energetická kalkulačka (orientační)</div>
+          <div class="brand__tag">Fotovoltaika • Tepelná čerpadla • Ohřev vody a vytápění</div>
+        </div>
+      </div>
+      <div class="navlinks">
+        <a href="./index.html">Úvod</a>
+        <a href="./step1.html">Kalkulačka</a>
+        <button class="btn" id="resetBtn" type="button">Vymazat údaje</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main wrap section">
+    
+        <div class="wizardTop">
+          <div class="progress"><div class="progress__bar" data-progress style="width:0%"></div></div>
+          <div class="meta">
+            <span class="pulse" aria-hidden="true"></span>
+            <span data-stepLabel class="mono">Krok 4 z 8</span>
+            <span class="phase" data-phase>Fáze: Výpočet (1–4)</span>
+            <span class="timer"><span data-timer>10:00</span></span>
+          </div>
+        </div>
+    <div class="card">
+      
+<h2>Krok 4: Zadání objektu</h2>
+<p>Po dokončení kroku 4 zobrazíme první předběžné výsledky.</p>
+<div class="summaryMini" id="miniSummary"></div>
+<div class="err" id="err" hidden></div>
+<div class="form">
+  <div class="field"><label for="floorArea">Celková vytápěná podlahová plocha (m²)</label><input id="floorArea" inputmode="decimal" placeholder="m²" /></div>
+  <div class="field"><label for="roofArea">ZP – plocha střechy (m²)</label><input id="roofArea" inputmode="decimal" placeholder="m²" /></div>
+
+  <div class="grid2">
+    <div class="field"><label for="ppCount">PP – počet podzemních podlaží</label><input id="ppCount" inputmode="numeric" placeholder="např. 1" /></div>
+    <div class="field"><label for="npCount">NP – počet nadzemních podlaží</label><input id="npCount" inputmode="numeric" placeholder="např. 6" /></div>
+  </div>
+
+  <div class="grid2">
+    <div class="field"><label for="bjCount">BJ – počet bytových jednotek</label><input id="bjCount" inputmode="numeric" placeholder="např. 24" /></div>
+    <div class="field"><label for="bdPeople">BD – počet osob v domě (volitelné)</label>
+      <input id="bdPeople" inputmode="numeric" placeholder="nebo nech prázdné" />
+      <div class="hint">Když BD nevyplníš, počítáme orientačně 2 osoby na 1 BJ.</div>
+    </div>
+  </div>
+
+  <div class="field"><label for="energyClass">Energetická třída</label>
+    <select id="energyClass"><option value="">Zvolte možnost</option><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option></select>
+    <div class="hint">Dle PENB nebo odhadem.</div>
+  </div>
+  <div class="field"><label for="penbNote">PENB (volitelné)</label><textarea id="penbNote" rows="3" placeholder="Poznámka / info k PENB"></textarea></div>
+</div>
+<div class="nav"><a class="btn" id="back" href="./step3.html">Zpět</a><button class="btn btn--primary" id="next" type="button">Zobrazit základní výsledek</button></div>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer__inner">
+      © 2026 • Energetická kalkulačka (orientační)
+    </div>
+  </footer>
+
+  <script src="./app.js"></script>
+  <script>
+(() => {
+  const s = ECO.loadState();
+
+  const floorArea = document.getElementById('floorArea');
+  const roofArea = document.getElementById('roofArea');
+  const ppCount = document.getElementById('ppCount');
+  const npCount = document.getElementById('npCount');
+  const bjCount = document.getElementById('bjCount');
+  const bdPeople = document.getElementById('bdPeople');
+  const energyClass = document.getElementById('energyClass');
+  const penbNote = document.getElementById('penbNote');
+
+  const err = document.getElementById('err');
+  const mini = document.getElementById('miniSummary');
+
+  // předvyplnění
+  floorArea.value = s.floorArea ?? '';
+  roofArea.value = s.roofArea ?? '';
+  ppCount.value = s.ppCount ?? '';
+  npCount.value = s.npCount ?? '';
+  bjCount.value = s.bjCount ?? '';
+  bdPeople.value = s.bdPeople ?? '';
+  energyClass.value = s.energyClass ?? '';
+  penbNote.value = s.penbNote ?? '';
+
+  // mini shrnutí (baseline)
+  mini.textContent = `Celkem (baseline): ${ECO.fmtCZK((ECO.computeCosts(s)).total)} / rok`;
+
+  document.getElementById('back').addEventListener('click', () => ECO.navigate('./step3.html'));
+  document.getElementById('next').addEventListener('click', () => {
+    const errs = [];
+    const warns = [];
+
+    s.floorArea = ECO.parseNumber(floorArea.value);
+    s.roofArea = ECO.parseNumber(roofArea.value);
+    s.ppCount = ECO.parseIntSafe(ppCount.value);
+    s.npCount = ECO.parseIntSafe(npCount.value);
+    s.bjCount = ECO.parseIntSafe(bjCount.value);
+    s.bdPeople = ECO.parseIntSafe(bdPeople.value);
+    s.energyClass = (energyClass.value || '').trim();
+    s.penbNote = (penbNote.value || '').trim();
+
+    // validace – povinné hlavně pro smysluplnost (Excel: ZP/NP/BJ/BD)
+    if (!Number.isFinite(s.roofArea) || s.roofArea <= 0) errs.push("Vyplň ZP (plocha střechy) – je nutná pro simulaci.");
+    if (!Number.isFinite(s.npCount) || s.npCount < 0) errs.push("Vyplň NP (počet nadzemních podlaží).");
+    if (!Number.isFinite(s.ppCount) || s.ppCount < 0) errs.push("Vyplň PP (počet podzemních podlaží).");
+    if (!Number.isFinite(s.bjCount) || s.bjCount <= 0) errs.push("Vyplň BJ (počet bytových jednotek).");
+
+    // BD je volitelné – když není, počítá se 2 os./BJ
+    if (Number.isFinite(s.bdPeople) && s.bdPeople < 0) errs.push("BD nemůže být záporné.");
+
+    if (Number.isFinite(s.floorArea) && s.floorArea < 0) errs.push("Plocha nemůže být záporná.");
+
+    if (Number.isFinite(s.floorArea) && s.floorArea > 200000) warns.push("Vytápěná plocha vypadá extrémně — zkontroluj nuly.");
+    if (Number.isFinite(s.roofArea) && s.roofArea > 200000) warns.push("Plocha střechy vypadá extrémně — zkontroluj nuly.");
+
+    if (errs.length) { ECO.showError(err, errs); return; }
+    if (warns.length) ECO.showError(err, warns); else ECO.showError(err, []);
+
+    ECO.saveState(s);
+    ECO.navigate("./result1.html");
+  });
+})();
+</script>
+</body>
+</html>

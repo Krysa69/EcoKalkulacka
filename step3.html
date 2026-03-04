@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Krok 3 – Technologie</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar__inner">
+      <div class="brand">
+        <div class="brand__logo" aria-hidden="true"></div>
+        <div>
+          <div class="brand__name">Energetická kalkulačka (orientační)</div>
+          <div class="brand__tag">Fotovoltaika • Tepelná čerpadla • Ohřev vody a vytápění</div>
+        </div>
+      </div>
+      <div class="navlinks">
+        <a href="./index.html">Úvod</a>
+        <a href="./step1.html">Kalkulačka</a>
+        <button class="btn" id="resetBtn" type="button">Vymazat údaje</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main wrap section">
+    
+        <div class="wizardTop">
+          <div class="progress"><div class="progress__bar" data-progress style="width:0%"></div></div>
+          <div class="meta">
+            <span class="pulse" aria-hidden="true"></span>
+            <span data-stepLabel class="mono">Krok 3 z 8</span>
+            <span class="phase" data-phase>Fáze: Výpočet (1–4)</span>
+            <span class="timer"><span data-timer>10:00</span></span>
+          </div>
+        </div>
+    <div class="card">
+      
+
+<h2>Krok 3: Výběr stávající technologie (pro odhad)</h2>
+<p class="hint">Tento krok se použije pouze tehdy, pokud v kroku 2 chybí některé roční náklady z fakturace. Na základě zvolené technologie se doplní odhad.</p>
+
+<div class="form" style="margin-top:12px">
+  <div class="field" id="rowTuv">
+    <label for="sysTuv">Stávající systém pro TUV</label>
+    <select id="sysTuv"></select>
+  </div>
+  <div class="field" id="rowHeat" style="margin-top:10px">
+    <label for="sysHeat">Stávající systém pro teplo</label>
+    <select id="sysHeat"></select>
+  </div>
+</div>
+
+<div class="card" style="margin-top:14px">
+  <h3 style="margin:0 0 8px">Co se stane dál</h3>
+  <ul style="margin:0; padding-left:18px">
+    <li>Pokud chybí náklady TUV/tepla, doplní se odhadem podle zvolené technologie a tvé spotřeby z kroku 1.</li>
+    <li>Elektřina ve společných prostorech se umí odhadnout automaticky (pokud ji nezadáš v kroku 2).</li>
+  </ul>
+  <div class="hint" style="margin-top:8px">Nic se ti tu nepřepíše, když už máš náklady vyplněné — odhad se použije jen pro chybějící položky.</div>
+</div>
+
+<div class="err" id="err" hidden></div>
+<div class="nav"><a class="btn" href="./step2.html">Zpět</a><button class="btn btn--primary" id="next" type="button">Pokračovat</button></div>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer__inner">
+      © 2026 • Energetická kalkulačka (orientační)
+    </div>
+  </footer>
+
+  <script src="./app.js"></script>
+  <script>
+    // global init
+    const rb = document.getElementById('resetBtn');
+    if (rb) rb.addEventListener('click', () => { ECO.resetAll(); window.location.href='./index.html'; });
+    ECO.renderTimer();
+    ECO.setWizardTop(3,8);
+  </script>
+  <script>
+  
+(() => {
+  const s = ECO.loadState();
+  const sysTuv = document.getElementById('sysTuv');
+  const sysHeat = document.getElementById('sysHeat');
+  const err = document.getElementById('err');
+
+  ECO.populateSelect(sysTuv, ECO.PRICE.tuv);
+  ECO.populateSelect(sysHeat, ECO.PRICE.teplo);
+
+  sysTuv.value = s.sysTuv || "Zvolte možnost";
+  sysHeat.value = s.sysHeat || "Zvolte možnost";
+
+  const needTuv = !Number.isFinite(s.costTuv);
+  const needHeat = !Number.isFinite(s.costHeat);
+  // UI: zobrazí se pouze pole, která jsou potřeba pro doplnění odhadu
+  document.getElementById('rowTuv').style.display = needTuv ? "" : "none";
+  document.getElementById('rowHeat').style.display = needHeat ? "" : "none";
+
+  document.getElementById('next').addEventListener('click', () => {
+    const errs = [];
+    if (needTuv && (!sysTuv.value || sysTuv.value === "Zvolte možnost")) errs.push("Vyberte stávající systém pro TUV (nebo doplňte roční náklady ve 2. kroku).");
+    if (needHeat && (!sysHeat.value || sysHeat.value === "Zvolte možnost")) errs.push("Vyberte stávající systém pro teplo (nebo doplňte roční náklady ve 2. kroku).");
+
+    if (errs.length) { ECO.showError(err, errs); return; }
+    ECO.showError(err, []);
+
+    s.sysTuv = sysTuv.value;
+    s.sysHeat = sysHeat.value;
+    ECO.saveState(s);
+
+    ECO.navigate("./step4.html");
+  });
+})();</script>
+</body>
+</html>

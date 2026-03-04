@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Krok 7 – Adresa</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar__inner">
+      <div class="brand">
+        <div class="brand__logo" aria-hidden="true"></div>
+        <div>
+          <div class="brand__name">Energetická kalkulačka (orientační)</div>
+          <div class="brand__tag">Fotovoltaika • Tepelná čerpadla • Ohřev vody a vytápění</div>
+        </div>
+      </div>
+      <div class="navlinks">
+        <a href="./index.html">Úvod</a>
+        <a href="./step1.html">Kalkulačka</a>
+        <button class="btn" id="resetBtn" type="button">Vymazat údaje</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main wrap section">
+    
+        <div class="wizardTop">
+          <div class="progress"><div class="progress__bar" data-progress style="width:0%"></div></div>
+          <div class="meta">
+            <span class="pulse" aria-hidden="true"></span>
+            <span data-stepLabel class="mono">Krok 7 z 8</span>
+            <span class="phase" data-phase>Fáze: Výpočet (1–4)</span>
+            <span class="timer"><span data-timer>10:00</span></span>
+          </div>
+        </div>
+    <div class="card card--wizard">
+      
+<h2>Krok 7: Adresa subjektu</h2>
+<p>Vyplňte prosím adresu. Pokud bylo ověřeno IČ, může být adresa předvyplněna.</p>
+<div class="form">
+  <div class="field"><label for="street">Ulice</label><input id="street" /></div>
+  <div class="field"><label for="city">Město</label><input id="city" /></div>
+  <div class="field"><label for="zip">PSČ</label><input id="zip" inputmode="numeric" /></div>
+  <div class="field"><label for="ds">Datová schránka (DS)</label><input id="ds" /></div>
+</div>
+<div class="err" id="err" hidden></div>
+<div class="nav"><a class="btn" href="./step6.html">Zpět</a><button class="btn btn--primary" id="next" type="button">Pokračovat</button></div>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer__inner">
+      © 2026 • Energetická kalkulačka (orientační)
+    </div>
+  </footer>
+
+  <script src="./app.js"></script>
+  <script>
+    // global init
+    const rb = document.getElementById('resetBtn');
+    if (rb) rb.addEventListener('click', () => { ECO.resetAll(); window.location.href='./index.html'; });
+    ECO.renderTimer();
+    ECO.setWizardTop(7,8);
+  </script>
+  <script>
+  
+(() => {
+  const s=ECO.loadState();
+  const street=document.getElementById('street');
+  const city=document.getElementById('city');
+  const zip=document.getElementById('zip');
+  const ds=document.getElementById('ds');
+  const err=document.getElementById('err');
+
+  street.value=s.street||"";
+  city.value=s.city||"";
+  zip.value=s.zip||"";
+  ds.value=s.ds||"";
+
+  document.getElementById('next').addEventListener('click', () => {
+    s.street=(street.value||"").trim();
+    s.city=(city.value||"").trim();
+    s.zip=(zip.value||"").trim();
+    s.ds=(ds.value||"").trim();
+
+    const errs=[];
+    if(!s.street) errs.push("Uveďte ulici a číslo.");
+    if(!s.city) errs.push("Uveďte město.");
+    if(!s.zip) errs.push("Uveďte PSČ.");
+    if(s.zip && !/^\d{3}\s?\d{2}$/.test(s.zip)) errs.push("PSČ musí být ve formátu 123 45.");
+
+    if(errs.length){ ECO.showError(err, errs); return; }
+    ECO.showError(err, []);
+    ECO.saveState(s);
+    ECO.navigate("./step8.html");
+  });
+})();</script>
+</body>
+</html>
