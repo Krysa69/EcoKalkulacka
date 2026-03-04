@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dokončeno</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar__inner">
+      <div class="brand">
+        <div class="brand__logo" aria-hidden="true"></div>
+        <div>
+          <div class="brand__name">Energetická kalkulačka (orientační)</div>
+          <div class="brand__tag">Fotovoltaika • Tepelná čerpadla • Ohřev vody a vytápění</div>
+        </div>
+      </div>
+      <div class="navlinks">
+        <a href="./index.html">Úvod</a>
+        <a href="./step1.html">Kalkulačka</a>
+        <button class="btn" id="resetBtn" type="button">Vymazat údaje</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main wrap section">
+    
+    <div class="card">
+      
+<h2>Dokončeno </h2>
+<p>
+  Data jsou uložená lokálně v prohlížeči (prototyp). V ostré verzi tady běží backend:
+  uložení leadu + detailní analýza + PDF / prezentace + návrh variant řešení.
+</p>
+<div class="nav">
+  <a class="btn" href="./result1.html">Zpět na výsledek</a>
+  <a class="btn btn--primary" href="./index.html" onclick="ECO.resetAll()">Nový výpočet</a>
+</div>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer__inner">
+      © 2026 • Energetická kalkulačka (orientační)
+    </div>
+  </footer>
+
+  <script src="./app.js"></script>
+  <script>
+    // global init
+    const rb = document.getElementById('resetBtn');
+    if (rb) rb.addEventListener('click', () => { ECO.resetAll(); window.location.href='./index.html'; });
+    ECO.renderTimer();
+    
+  </script>
+  <script>
+  
+  </script>
+</body>
+</html>

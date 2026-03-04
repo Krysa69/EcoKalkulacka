@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Krok 5 – Subjekt</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar__inner">
+      <div class="brand">
+        <div class="brand__logo" aria-hidden="true"></div>
+        <div>
+          <div class="brand__name">Energetická kalkulačka (orientační)</div>
+          <div class="brand__tag">Fotovoltaika • Tepelná čerpadla • Ohřev vody a vytápění</div>
+        </div>
+      </div>
+      <div class="navlinks">
+        <a href="./index.html">Úvod</a>
+        <a href="./step1.html">Kalkulačka</a>
+        <button class="btn" id="resetBtn" type="button">Vymazat údaje</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main wrap section">
+    
+        <div class="wizardTop">
+          <div class="progress"><div class="progress__bar" data-progress style="width:0%"></div></div>
+          <div class="meta">
+            <span class="pulse" aria-hidden="true"></span>
+            <span data-stepLabel class="mono">Krok 5 z 8</span>
+            <span class="phase" data-phase>Fáze: Výpočet (1–4)</span>
+            <span class="timer"><span data-timer>10:00</span></span>
+          </div>
+        </div>
+    <div class="card card--wizard">
+      
+<h2>Krok 5: Identifikace subjektu</h2>
+<p>
+  Pro zpracování podrobnější analýzy a přípravu návrhu řešení můžete zadat identifikační číslo subjektu (IČ).
+  Pole je nepovinné. Pokud bude uvedeno platné IČ, systém automaticky doplní dostupné údaje o subjektu z veřejných registrů.
+</p>
+
+<div class="form">
+  <div class="field">
+    <label for="ico">Identifikační číslo (IČ) <span class="badge">nepovinné</span></label>
+    <div class="row row--tight">
+      <input id="ico" inputmode="numeric" placeholder="např. 12345678" maxlength="8" />
+      <button class="btn" id="icoUse" type="button">Použít</button>
+    </div>
+    <div class="ico-status ico-status--info" id="icoMsg">Pokud IČ nevyplníte, můžete pokračovat bez jeho zadání.</div>
+    <div class="hint">
+      Po zadání IČ klikněte na tlačítko „Použít“. V případě úspěšného ověření budou údaje uloženy a v dalších krocích předvyplněny.
+    </div>
+  </div>
+</div>
+
+<div class="err" id="err" hidden></div>
+
+<div class="nav">
+  <a class="btn" href="./result1.html">Zpět</a>
+  <div class="nav__right">
+        <button class="btn btn--primary" id="next" type="button">Pokračovat</button>
+  </div>
+</div>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer__inner">
+      © 2026 • Energetická kalkulačka (orientační)
+    </div>
+  </footer>
+
+  <script src="./app.js"></script>
+  <script>
+    // global init
+    const rb = document.getElementById('resetBtn');
+    if (rb) rb.addEventListener('click', () => { ECO.resetAll(); window.location.href='./index.html'; });
+    ECO.renderTimer();
+    ECO.setWizardTop(5,8);
+  </script>
+  <script>
+  
+(() => {
+  const s = ECO.loadState();
+  const icoEl = document.getElementById("ico");
+  const icoUse = document.getElementById("icoUse");
+  const icoMsg = document.getElementById("icoMsg");
+  const err = document.getElementById("err");
+  const next = document.getElementById("next");
+
+  // obnova stavu
+  icoEl.value = s.ico ?? "";
+  s.ico_status = s.ico_status ?? "none"; // none | valid | invalid
+
+  function normalizeICO(v){
+    return String(v || "").replace(/\D/g, "");
+  }
+
+  function setMsg(type, text){
+    icoMsg.textContent = text;
+    icoMsg.classList.remove("ico-status--ok","ico-status--bad","ico-status--info");
+    icoMsg.classList.add(type === "ok" ? "ico-status--ok" : (type === "bad" ? "ico-status--bad" : "ico-status--info"));
+  }
+
+  function sync(){
+    const v = normalizeICO(icoEl.value);
+    const has = v.length > 0;
+    next.disabled = has && s.ico_status !== "valid";
+  }
+
+  // úvodní hláška
+  if (!normalizeICO(icoEl.value)) setMsg("info", "Pokud IČ nevyplníte, můžete pokračovat bez jeho zadání.");
+  else if (s.ico_status === "valid") setMsg("ok", "IČ bylo ověřeno. Údaje o subjektu byly načteny.");
+  else if (s.ico_status === "invalid") setMsg("bad", "Zadané IČ nebylo ověřeno nebo nebylo nalezeno.");
+  else setMsg("info", "Zadané IČ je nutné ověřit tlačítkem „Použít“.");
+  sync();
+
+  icoEl.addEventListener("input", () => {
+    const v = normalizeICO(icoEl.value);
+    icoEl.value = v;
+    s.ico = v;
+    s.ico_status = "none";
+    ECO.saveState(s);
+    ECO.showError(err, []);
+    if (!v) setMsg("info", "Pokud IČ nevyplníte, můžete pokračovat bez jeho zadání.");
+    else setMsg("info", "Zadané IČ je nutné ověřit tlačítkem „Použít“.");
+    sync();
+  });
+
+  icoUse.addEventListener("click", async () => {
+    const v = normalizeICO(icoEl.value);
+
+    if (!v) {
+      s.ico = "";
+      s.ico_status = "none";
+      ECO.saveState(s);
+      setMsg("info", "IČ nebylo zadáno. Můžete pokračovat.");
+      ECO.showError(err, []);
+      sync();
+      return;
+    }
+
+    if (v.length !== 8) {
+      s.ico = v;
+      s.ico_status = "invalid";
+      ECO.saveState(s);
+      setMsg("bad", "IČ musí obsahovat přesně 8 číslic.");
+      ECO.showError(err, ["IČ musí obsahovat přesně 8 číslic."]);
+      sync();
+      return;
+    }
+
+    // kontrolní číslice (základní validace)
+    if (!ECO.validateICO(v)) {
+      s.ico = v;
+      s.ico_status = "invalid";
+      ECO.saveState(s);
+      setMsg("bad", "Zadané IČ je neplatné (nesouhlasí kontrolní číslice).");
+      ECO.showError(err, ["Zadané IČ je neplatné (nesouhlasí kontrolní číslice)."]);
+      sync();
+      return;
+    }
+
+    // načtení z ARES
+    try {
+      setMsg("info", "Ověřuji IČ a načítám údaje…");
+      ECO.showError(err, []);
+
+      const info = await ECO.lookupICOInAres(v);
+      if (!info) {
+        s.ico = v;
+        s.ico_status = "invalid";
+        ECO.saveState(s);
+        setMsg("bad", "Subjekt nebyl v registrech nalezen.");
+        ECO.showError(err, ["Subjekt nebyl v registrech nalezen."]);
+        sync();
+        return;
+      }
+
+      s.ico = v;
+      s.ico_status = "valid";
+      // uložit do stavu pro předvyplnění dalších kroků
+      s.subjectName = info.subjectName || s.subjectName || "";
+      s.seat = info.seat || s.seat || "";
+      s.street = info.street || s.street || "";
+      s.city = info.city || s.city || "";
+      s.zip = info.zip || s.zip || "";
+
+      ECO.saveState(s);
+      setMsg("ok", "IČ bylo ověřeno. Údaje o subjektu byly načteny.");
+      sync();
+
+    } catch (e) {
+      s.ico = v;
+      s.ico_status = "invalid";
+      ECO.saveState(s);
+      setMsg("bad", "Ověření se nepodařilo dokončit. Zkuste to prosím znovu.");
+      ECO.showError(err, ["Ověření se nepodařilo dokončit. Zkuste to prosím znovu."]);
+      sync();
+    }
+  });
+
+  next.addEventListener("click", () => {
+    const v = normalizeICO(icoEl.value);
+    if (v && s.ico_status !== "valid") {
+      setMsg("bad", "Pokud zadáváte IČ, je nutné jej nejprve ověřit tlačítkem „Použít“.");
+      ECO.showError(err, ["Ověřte IČ tlačítkem „Použít“, nebo pole ponechte prázdné."]);
+      sync();
+      return;
+    }
+    s.ico = v || "";
+    ECO.saveState(s);
+    ECO.navigate("./step6.html");
+  });
+})();
+</script>
+</body>
+</html>
